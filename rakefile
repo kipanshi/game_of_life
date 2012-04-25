@@ -1,0 +1,34 @@
+require 'rake/clean'
+CLEAN.include(["*.o", "*.exe*"])
+
+OUTPUT = "tests.exe"
+
+task :default => [:test]
+
+task :test => [:build] do
+  sh "./#{OUTPUT}" do |ok, output|
+    sh "gntp-send '#{ ok ? "success!" : "#{output.exitstatus} test(s) failed"}' ' '"
+  end
+end
+
+task :build do
+  sh "g++ -Wfatal-errors -Wall -W -Werror -Wfloat-equal -Wundef -Wendif-labels -Wshadow -pedantic-errors -I.. *.cpp -o #{OUTPUT}" do |ok, res|
+    unless ok
+      sh "gntp-send 'Build failed' ' '"
+      fail
+    end
+  end
+end
+
+task :build_debug do
+  sh "g++ -Wfatal-errors -ggdb -Wundef -Wendif-labels -Wshadow -pedantic-errors -I.. *.cpp -o #{OUTPUT}" do |ok, res|
+    unless ok
+      sh "gntp-send 'Build failed' ' '"
+      fail
+    end
+  end
+end
+
+task :debug => [:build_debug] do
+  sh "gdb #{OUTPUT}"
+end
